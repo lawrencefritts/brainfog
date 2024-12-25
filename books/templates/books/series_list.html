@@ -1,0 +1,128 @@
+{% extends 'books/base.html' %}
+{% block title %}Series List{% endblock %}
+
+{% block extra_css %}
+<style>
+.series-card {
+    transition: transform 0.2s;
+}
+.series-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.book-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+.actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+<div class="row mb-4">
+    <div class="col">
+    <h1>Series</h1>
+    </div>
+    <div class="col-auto">
+    <a href="{% url 'books:series_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Series
+    </a>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="row mb-4">
+    <div class="col-md-6">
+    <div class="input-group">
+        <input type="text" class="form-control" id="seriesSearch" 
+            placeholder="Search series..."
+            aria-label="Search series">
+        <button class="btn btn-outline-secondary" type="button">
+        <i class="fas fa-search"></i>
+        </button>
+    </div>
+    </div>
+</div>
+
+<!-- Series Grid -->
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for series in series_list %}
+    <div class="col series-item">
+    <div class="card h-100 series-card">
+        <div class="card-body">
+        <!-- Action Buttons -->
+        <div class="actions">
+            <a href="{% url 'books:series_update' series.pk %}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-edit"></i>
+            </a>
+            <a href="{% url 'books:series_delete' series.pk %}" class="btn btn-sm btn-outline-danger">
+            <i class="fas fa-trash"></i>
+            </a>
+        </div>
+
+        <h5 class="card-title mb-3">{{ series.name }}</h5>
+        <p class="card-text">
+            <span class="badge bg-info">{{ series.book_set.count }} books</span>
+        </p>
+
+        <!-- Books in Series -->
+        <div class="book-list">
+            <h6>Books in Series:</h6>
+            <ul class="list-unstyled">
+            {% for book in series.book_set.all|dictsort:"series_order" %}
+            <li class="mb-2">
+                <small>
+                {{ book.series_order }}. 
+                <a href="{% url 'books:book_detail' book.pk %}">
+                    {{ book.title }}
+                </a>
+                {% if book.book_status %}
+                <span class="badge {% if book.book_status == 'TR' %}bg-warning
+                                {% elif book.book_status == 'TA' %}bg-info
+                                {% elif book.book_status == 'F' %}bg-success
+                                {% else %}bg-secondary{% endif %}">
+                    {{ book.get_book_status_display }}
+                </span>
+                {% endif %}
+                </small>
+            </li>
+            {% empty %}
+            <li><small class="text-muted">No books in this series yet</small></li>
+            {% endfor %}
+            </ul>
+        </div>
+        </div>
+    </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+    <div class="alert alert-info">
+        No series found. Click "Add Series" to create one.
+    </div>
+    </div>
+    {% endfor %}
+</div>
+</div>
+
+{% block extra_js %}
+<script>
+document.getElementById('seriesSearch').addEventListener('keyup', function() {
+    const searchText = this.value.toLowerCase();
+    document.querySelectorAll('.series-item').forEach(function(item) {
+    const seriesName = item.querySelector('.card-title').textContent.toLowerCase();
+    if (seriesName.includes(searchText)) {
+        item.style.display = '';
+    } else {
+        item.style.display = 'none';
+    }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}
+

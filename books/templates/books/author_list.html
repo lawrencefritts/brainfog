@@ -1,0 +1,120 @@
+{% extends "books/base.html" %}
+{% block title %}Authors{% endblock %}
+
+{% block extra_css %}
+<style>
+.author-card {
+    transition: transform 0.2s;
+}
+.author-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.filter-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+.action-buttons .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+<!-- Header Section -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Authors</h1>
+    <a href="{% url 'books:author_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Add Author
+    </a>
+</div>
+
+<!-- Filter Section -->
+<div class="filter-section mb-4">
+    <div class="row">
+    <div class="col-md-4">
+        <div class="input-group">
+        <span class="input-group-text"><i class="fas fa-search"></i></span>
+        <input type="text" class="form-control" id="authorSearch" placeholder="Search authors...">
+        </div>
+    </div>
+    <div class="col-md-4">
+        <select class="form-select" id="sortBy">
+        <option value="name">Sort by Name</option>
+        <option value="books">Sort by Book Count</option>
+        </select>
+    </div>
+    </div>
+</div>
+
+<!-- Authors Grid -->
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for author in author_list %}
+    <div class="col">
+    <div class="card h-100 author-card">
+        <div class="card-body">
+        <h5 class="card-title">{{ author.first_name }} {{ author.last_name }}</h5>
+        <p class="card-text">
+            <span class="badge bg-info">{{ author.book_set.count }} Books</span>
+        </p>
+        <div class="action-buttons">
+            <a href="{% url 'books:author_detail' author.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-book"></i> View Books
+            </a>
+            <a href="{% url 'books:author_update' author.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'books:author_delete' author.id %}" class="btn btn-outline-danger">
+            <i class="fas fa-trash"></i> Delete
+            </a>
+        </div>
+        </div>
+    </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+    <div class="alert alert-info" role="alert">
+        No authors found. Add your first author!
+    </div>
+    </div>
+    {% endfor %}
+</div>
+</div>
+
+{% block extra_js %}
+<script>
+// Search functionality
+document.getElementById('authorSearch').addEventListener('input', function(e) {
+    const searchText = e.target.value.toLowerCase();
+    document.querySelectorAll('.author-card').forEach(card => {
+    const authorName = card.querySelector('.card-title').textContent.toLowerCase();
+    card.closest('.col').style.display = 
+        authorName.includes(searchText) ? 'block' : 'none';
+    });
+});
+
+// Sorting functionality
+document.getElementById('sortBy').addEventListener('change', function(e) {
+    const cards = Array.from(document.querySelectorAll('.col'));
+    const container = document.querySelector('.row');
+    
+    cards.sort((a, b) => {
+    if (e.target.value === 'name') {
+        return a.querySelector('.card-title').textContent
+        .localeCompare(b.querySelector('.card-title').textContent);
+    } else {
+        return parseInt(b.querySelector('.badge').textContent) - 
+            parseInt(a.querySelector('.badge').textContent);
+    }
+    });
+
+    cards.forEach(card => container.appendChild(card));
+});
+</script>
+{% endblock %}
+{% endblock %}
+

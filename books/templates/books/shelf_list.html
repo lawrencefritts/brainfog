@@ -1,0 +1,508 @@
+{% extends 'books/base.html' %}
+
+{% block title %}My Bookshelf{% endblock %}
+
+{% block extra_css %}
+<style>
+.bookshelf-container {
+    padding: 20px;
+    background: #f5f5f5;
+}
+
+.shelf {
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.shelf-title {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+.books {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-height: 200px;
+    padding: 10px 0;
+    align-items: flex-end;
+    position: relative;
+}
+
+.books::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 15px;
+    background: linear-gradient(90deg, #8b4513 0%, #a0522d 50%, #8b4513 100%);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.book {
+    height: 180px;
+    width: 30px;
+    margin: 0 2px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: bottom left;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    z-index: 1;
+
+.book:hover {
+    transform: translateY(-8px) rotate(-4deg) translateX(-2px);
+    box-shadow: 5px 5px 10px rgba(0,0,0,0.3);
+    z-index: 100;
+}
+
+.book-popup {
+    position: absolute;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.95) rotate(2deg);
+    min-width: 300px;
+    background: #fff;
+    border-radius: 2px 8px 8px 2px;
+    padding: 20px;
+    box-shadow: 
+        0 15px 30px rgba(0,0,0,0.2),
+        2px 4px 5px rgba(0,0,0,0.05),
+        -2px 0 5px rgba(0,0,0,0.05),
+        inset -1px 0 3px rgba(0,0,0,0.1),
+        inset 1px 0 3px rgba(0,0,0,0.1);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: #fff;
+    background-image: 
+        repeating-linear-gradient(
+            90deg,
+            #f5f5f5 0px,
+            #f5f5f5 2px,
+            transparent 2px,
+            transparent 4px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,0) 0%,
+            rgba(255,255,255,0.5) 50%,
+            rgba(255,255,255,0) 100%
+        );
+    background-size: 200% 100%;
+    background-position: 120% 0;
+    z-index: 99;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    margin-left: 20px;
+    pointer-events: auto;
+}
+
+.book:hover .book-popup {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) scale(1) rotate(2deg);
+    animation: fadeInStagger 0.5s ease-out;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2),
+            3px 6px 8px rgba(0,0,0,0.1),
+            -3px 0 8px rgba(0,0,0,0.1),
+            inset -1px 0 3px rgba(0,0,0,0.1),
+            inset 1px 0 3px rgba(0,0,0,0.1);
+    background-position: -20% 0;
+}
+
+@keyframes fadeInStagger {
+    0% { 
+        opacity: 0; 
+        transform: translateY(-50%) scale(0.95) rotate(2deg) translateZ(-50px); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateY(-50%) scale(1) rotate(2deg) translateZ(0); 
+    }
+}
+
+
+.book-popup:hover {
+    z-index: 101;
+}
+
+.book-popup::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 30px;
+    border-style: solid;
+    border-width: 10px 10px 10px 0;
+    border-color: transparent white transparent transparent;
+}
+
+.book-popup-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #2c3e50;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}
+
+.book-popup-detail {
+    font-size: 0.9em;
+    color: #666;
+    margin: 2px 0;
+}
+
+.book-popup-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    color: white;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.to-read .book-popup-status {
+    background: #27ae60;
+}
+
+.to-acquire .book-popup-status {
+    background: #2980b9;
+}
+
+.finished .book-popup-status {
+    background: #c0392b;
+}
+
+.not-for-me .book-popup-status {
+    background: #7f8c8d;
+}
+
+.book-popup-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.book-popup-button {
+    position: relative;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 2px 8px 8px 2px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: -2px 2px 5px rgba(0,0,0,0.2);
+    margin: 5px 10px;
+    transform-origin: left center;
+
+.book-popup-button.edit {
+    background: #3498db;
+    color: white;
+}
+
+.book-popup-button.delete {
+    background: #e74c3c;
+    color: white;
+}
+
+.book-popup-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+}
+
+.book-popup-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.book-spine {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    padding: 10px 5px;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+    overflow: hidden;
+    font-size: 0.9em;
+    color: white;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: inset -1px 0 2px rgba(0,0,0,0.2);
+    transition: all 0.3s ease-out;
+
+.to-read .book-spine {
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+}
+
+.to-acquire .book-spine {
+    background: linear-gradient(90deg, #3498db, #2980b9);
+}
+
+.finished .book-spine {
+    background: linear-gradient(90deg, #e74c3c, #c0392b);
+}
+
+.not-for-me .book-spine {
+    background: linear-gradient(90deg, #95a5a6, #7f8c8d);
+}
+
+.book-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.book-series {
+    font-style: italic;
+    font-size: 0.8em;
+}
+
+.book-author {
+    font-size: 0.8em;
+}
+
+.add-book-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.add-book-btn:hover {
+    transform: scale(1.1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bookshelf-container">
+<div class="alert alert-info">
+    <h4>Debug Information</h4>
+    <p>Total Books in Database: {{ to_read|length|add:to_acquire|length|add:finished|length|add:not_for_me|length }}</p>
+    <ul>
+        <li>To Read (TR): {{ to_read|length }} books</li>
+        <li>To Acquire (TA): {{ to_acquire|length }} books</li>
+        <li>Finished (F): {{ finished|length }} books</li>
+        <li>Not For Me (N4): {{ not_for_me|length }} books</li>
+    </ul>
+</div>
+<!-- To Read Shelf -->
+<div class="shelf to-read">
+    <h2 class="shelf-title">To Read</h2>
+    <div class="text-muted mb-2">Contains {{ to_read|length }} books</div>
+    <div class="books">
+    {% for book in to_read %}
+    <div class="book">
+        <div class="book-spine">
+            <div class="book-title">{{ book.title }}</div>
+            {% if book.series %}
+            <div class="book-series">{{ book.series.name }}</div>
+            {% endif %}
+            <div class="book-author">{{ book.author.first_name }} {{ book.author.last_name }}</div>
+        </div>
+        <div class="book-popup">
+            <div class="book-popup-title">{{ book.title }}</div>
+            <div class="book-popup-detail">
+                <strong>Author:</strong> {{ book.author.first_name }} {{ book.author.last_name }}
+            </div>
+            {% if book.series %}
+            <div class="book-popup-detail">
+                <strong>Series:</strong> {{ book.series.name }} {% if book.series_order %}(Book {{ book.series_order }}){% endif %}
+            </div>
+            {% endif %}
+            <div class="book-popup-detail">
+                <strong>Genre:</strong> {{ book.get_genre_display }}
+            </div>
+            <div class="book-popup-detail">
+                <strong>Type:</strong> {{ book.get_book_type_display }}
+            </div>
+            {% if book.favorite %}
+            <div class="book-popup-detail">⭐ Favorite</div>
+            {% endif %}
+            {% if book.notes %}
+            <div class="book-popup-detail">
+                <strong>Notes:</strong><br>
+                {{ book.notes|linebreaks }}
+            </div>
+            {% endif %}
+            <div class="book-popup-status">{{ book.get_book_status_display }}</div>
+            <div class="book-popup-actions">
+                <a href="{% url 'books:book_update' book.id %}" class="book-popup-button edit">
+                    📝 Edit
+                </a>
+                <a href="{% url 'books:book_delete' book.id %}" class="book-popup-button delete">
+                    ❌ Delete
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+</div>
+
+<!-- To Acquire Shelf -->
+<div class="shelf to-acquire">
+    <h2 class="shelf-title">To Acquire</h2>
+    <div class="text-muted mb-2">Contains {{ to_acquire|length }} books</div>
+    <div class="books">
+    {% for book in to_acquire %}
+    <div class="book">
+        <div class="book-spine">
+            <div class="book-title">{{ book.title }}</div>
+            {% if book.series %}
+            <div class="book-series">{{ book.series.name }}</div>
+            {% endif %}
+            <div class="book-author">{{ book.author.first_name }} {{ book.author.last_name }}</div>
+        </div>
+        <div class="book-popup">
+            <div class="book-popup-title">{{ book.title }}</div>
+            <div class="book-popup-detail">
+                <strong>Author:</strong> {{ book.author.first_name }} {{ book.author.last_name }}
+            </div>
+            {% if book.series %}
+            <div class="book-popup-detail">
+                <strong>Series:</strong> {{ book.series.name }} {% if book.series_order %}(Book {{ book.series_order }}){% endif %}
+            </div>
+            {% endif %}
+            <div class="book-popup-detail">
+                <strong>Genre:</strong> {{ book.get_genre_display }}
+            </div>
+            <div class="book-popup-detail">
+                <strong>Type:</strong> {{ book.get_book_type_display }}
+            </div>
+            {% if book.favorite %}
+            <div class="book-popup-detail">⭐ Favorite</div>
+            {% endif %}
+            {% if book.notes %}
+            <div class="book-popup-detail">
+                <strong>Notes:</strong><br>
+                {{ book.notes|linebreaks }}
+            </div>
+            {% endif %}
+            <div class="book-popup-status">{{ book.get_book_status_display }}</div>
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+</div>
+
+<!-- Finished Shelf -->
+<div class="shelf finished">
+    <h2 class="shelf-title">Finished</h2>
+    <div class="text-muted mb-2">Contains {{ finished|length }} books</div>
+    <div class="books">
+    {% for book in finished %}
+    <div class="book">
+        <div class="book-spine">
+            <div class="book-title">{{ book.title }}</div>
+            {% if book.series %}
+            <div class="book-series">{{ book.series.name }}</div>
+            {% endif %}
+            <div class="book-author">{{ book.author.first_name }} {{ book.author.last_name }}</div>
+        </div>
+        <div class="book-popup">
+            <div class="book-popup-title">{{ book.title }}</div>
+            <div class="book-popup-detail">
+                <strong>Author:</strong> {{ book.author.first_name }} {{ book.author.last_name }}
+            </div>
+            {% if book.series %}
+            <div class="book-popup-detail">
+                <strong>Series:</strong> {{ book.series.name }} {% if book.series_order %}(Book {{ book.series_order }}){% endif %}
+            </div>
+            {% endif %}
+            <div class="book-popup-detail">
+                <strong>Genre:</strong> {{ book.get_genre_display }}
+            </div>
+            <div class="book-popup-detail">
+                <strong>Type:</strong> {{ book.get_book_type_display }}
+            </div>
+            {% if book.favorite %}
+            <div class="book-popup-detail">⭐ Favorite</div>
+            {% endif %}
+            {% if book.notes %}
+            <div class="book-popup-detail">
+                <strong>Notes:</strong><br>
+                {{ book.notes|linebreaks }}
+            </div>
+            {% endif %}
+            <div class="book-popup-status">{{ book.get_book_status_display }}</div>
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+</div>
+
+<!-- Not For Me Shelf -->
+<div class="shelf not-for-me">
+    <h2 class="shelf-title">Not For Me</h2>
+    <div class="text-muted mb-2">Contains {{ not_for_me|length }} books</div>
+    <div class="books">
+    {% for book in not_for_me %}
+    <div class="book">
+        <div class="book-spine">
+            <div class="book-title">{{ book.title }}</div>
+            {% if book.series %}
+            <div class="book-series">{{ book.series.name }}</div>
+            {% endif %}
+            <div class="book-author">{{ book.author.first_name }} {{ book.author.last_name }}</div>
+        </div>
+        <div class="book-popup">
+            <div class="book-popup-title">{{ book.title }}</div>
+            <div class="book-popup-detail">
+                <strong>Author:</strong> {{ book.author.first_name }} {{ book.author.last_name }}
+            </div>
+            {% if book.series %}
+            <div class="book-popup-detail">
+                <strong>Series:</strong> {{ book.series.name }} {% if book.series_order %}(Book {{ book.series_order }}){% endif %}
+            </div>
+            {% endif %}
+            <div class="book-popup-detail">
+                <strong>Genre:</strong> {{ book.get_genre_display }}
+            </div>
+            <div class="book-popup-detail">
+                <strong>Type:</strong> {{ book.get_book_type_display }}
+            </div>
+            {% if book.favorite %}
+            <div class="book-popup-detail">⭐ Favorite</div>
+            {% endif %}
+            {% if book.notes %}
+            <div class="book-popup-detail">
+                <strong>Notes:</strong><br>
+                {{ book.notes|linebreaks }}
+            </div>
+            {% endif %}
+            <div class="book-popup-status">{{ book.get_book_status_display }}</div>
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+</div>
+</div>
+
+<a href="{% url 'books:book_create' %}" class="add-book-btn">+</a>
+{% endblock %}
+

@@ -1,0 +1,91 @@
+{% extends 'books/base.html' %}
+
+{% block title %}{{ series.name }} - Series Detail{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>{{ series.name }}</h1>
+                <div>
+                    <a href="{% url 'books:series_update' series.pk %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{% url 'books:series_delete' series.pk %}" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete
+                    </a>
+                    <a href="{% url 'books:series_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Series
+                    </a>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Series Progress</h5>
+                    <p>Books in Series: {{ book_list|length }}</p>
+                    <p>Books Finished: {{ finished_count }}</p>
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar" 
+                            style="width: {% widthratio finished_count book_list|length 100 %}%"
+                            aria-valuenow="{% widthratio finished_count book_list|length 100 %}"
+                            aria-valuemin="0" aria-valuemax="100">
+                            {% widthratio finished_count book_list|length 100 %}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Books in Series</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for book in book_list|dictsort:"series_order" %}
+                                <tr>
+                                    <td>{{ book.series_order }}</td>
+                                    <td>{{ book.title }}</td>
+                                    <td>{{ book.author }}</td>
+                                    <td>
+                                        <span class="badge {% if book.book_status == 'F' %}bg-success
+                                                        {% elif book.book_status == 'TR' %}bg-warning
+                                                        {% elif book.book_status == 'TA' %}bg-info
+                                                        {% else %}bg-secondary{% endif %}">
+                                            {{ book.get_book_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'books:book_detail' book.pk %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-book-open"></i>
+                                        </a>
+                                        <a href="{% url 'books:book_update' book.pk %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No books in this series yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
